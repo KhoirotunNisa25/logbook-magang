@@ -70,6 +70,11 @@ export default function Home() {
       }
     });
 
+    const currentMonth = new Date().getMonth() + 1;
+    if (currentMonth >= 7 && currentMonth <= 12) {
+      setSelectedMonthIndex(currentMonth);
+    }
+
     setAiSettings(StorageService.getAISettings());
 
     return () => unsubscribe();

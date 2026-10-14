@@ -53,7 +53,8 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
     } else {
       const today = getTodayStr();
       setDate(today);
-      const isSat = new Date(today).getDay() === 6;
+      const [y, m, d] = today.split("-").map(Number);
+      const isSat = new Date(y, m - 1, d).getDay() === 6;
       setStartTime(isSat ? profile.defaultStartSaturday : profile.defaultStartWeekday);
       setEndTime(isSat ? profile.defaultEndSaturday : profile.defaultEndWeekday);
       setRawTelegramText("");
@@ -65,7 +66,8 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
 
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
-    const day = new Date(newDate).getDay();
+    const [y, m, d] = newDate.split("-").map(Number);
+    const day = new Date(y, m - 1, d).getDay();
     if (day === 6) {
       setStartTime(profile.defaultStartSaturday);
       setEndTime(profile.defaultEndSaturday);

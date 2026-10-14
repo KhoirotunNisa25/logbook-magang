@@ -17,9 +17,23 @@ export function escapeLatex(text: string): string {
 }
 
 export function generateLatexSource(profile: StudentProfile, logbook: WeeklyLogbook): string {
-  // Pisahkan reports: Senin-Jumat (maks 5 baris di halaman 1), Sabtu (halaman 2)
-  const page1Reports = logbook.reports.slice(0, 5);
-  const page2Reports = logbook.reports.slice(5);
+  let page1Reports: typeof logbook.reports = [];
+  let page2Reports: typeof logbook.reports = [];
+
+  if (logbook.reports.length <= 3) {
+    page1Reports = logbook.reports;
+    page2Reports = [];
+  } else if (logbook.reports.length === 6) {
+    page1Reports = logbook.reports.slice(0, 5);
+    page2Reports = logbook.reports.slice(5);
+  } else if (logbook.reports.length === 5) {
+    page1Reports = logbook.reports.slice(0, 3);
+    page2Reports = logbook.reports.slice(3);
+  } else {
+    // 4 reports
+    page1Reports = logbook.reports.slice(0, 2);
+    page2Reports = logbook.reports.slice(2);
+  }
 
   const renderTableRows = (reports: typeof logbook.reports) => {
     return reports
@@ -29,7 +43,7 @@ export function generateLatexSource(profile: StudentProfile, logbook: WeeklyLogb
         const datePart = formattedDate.split(", ")[1] || "";
         const dateCell = `\\centering ${escapeLatex(dayPart)}, \\\\ ${escapeLatex(datePart)}`;
         const startCell = `\\centering ${escapeLatex(r.startTime || "08.00")}`;
-        const endCell = `\\centering ${escapeLatex(r.endTime || "16.00")}`;
+        const endCell = `\\centering ${escapeLatex(r.endTime || (r.dayName === "Sabtu" ? "14.00" : "16.00"))}`;
         const narrativeCell = escapeLatex(r.narrative || "-");
 
         return `${dateCell} & ${startCell} & ${endCell} & ${narrativeCell} \\tabularnewline\n\\hline`;

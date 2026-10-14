@@ -9,7 +9,7 @@ import {
 } from "@/types";
 import { auth, db, googleProvider } from "./firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
-import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 
 const STORAGE_KEYS = {
   PROFILE_PREFIX: "polinema_magang_profile_",
@@ -113,7 +113,7 @@ export class StorageService {
 
     if (userId !== "guest") {
       try {
-        await setDoc(doc(db, "users", userId, "daily_reports", date), { deleted: true }, { merge: true });
+        await deleteDoc(doc(db, "users", userId, "daily_reports", date));
       } catch (err) {
         console.error("Failed to delete report from Firestore:", err);
       }

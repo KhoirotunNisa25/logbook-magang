@@ -112,7 +112,8 @@ function createWeeklyLogbook(
     if (reportsMap[dateStr]) {
       return reportsMap[dateStr];
     }
-    const d = new Date(dateStr);
+    const [y, m, dayNum] = dateStr.split("-").map(Number);
+    const d = new Date(y, m - 1, dayNum);
     const isSaturday = d.getDay() === 6;
     return {
       id: dateStr,

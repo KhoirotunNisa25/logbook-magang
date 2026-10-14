@@ -25,8 +25,23 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
   if (!isOpen || !logbook) return null;
 
-  const page1Reports = logbook.reports.slice(0, 5);
-  const page2Reports = logbook.reports.slice(5);
+  let page1Reports: typeof logbook.reports = [];
+  let page2Reports: typeof logbook.reports = [];
+
+  if (logbook.reports.length <= 3) {
+    page1Reports = logbook.reports;
+    page2Reports = [];
+  } else if (logbook.reports.length === 6) {
+    page1Reports = logbook.reports.slice(0, 5);
+    page2Reports = logbook.reports.slice(5);
+  } else if (logbook.reports.length === 5) {
+    page1Reports = logbook.reports.slice(0, 3);
+    page2Reports = logbook.reports.slice(3);
+  } else {
+    page1Reports = logbook.reports.slice(0, 2);
+    page2Reports = logbook.reports.slice(2);
+  }
+
   const latexSource = generateLatexSource(profile, logbook);
 
   const handlePrint = () => {
@@ -54,6 +69,41 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  const renderSignatures = () => (
+    <div className="mt-8 space-y-6">
+      {/* Mahasiswa Signature */}
+      <div className="flex justify-end pr-8">
+        <div className="text-center w-56">
+          <div>Mahasiswa,</div>
+          <div className="h-20" />
+          <div className="font-bold underline">{profile.nama}.</div>
+        </div>
+      </div>
+
+      {/* Mengetahui */}
+      <div className="text-center font-bold">Mengetahui,</div>
+
+      {/* Dospem & Pembimbing Lapangan */}
+      <div className="flex justify-between px-4">
+        <div className="text-center w-64">
+          <div>Dosen Pembimbing,</div>
+          <div className="h-20" />
+          <div className="font-bold underline">
+            {profile.dosenPembimbing}
+          </div>
+        </div>
+
+        <div className="text-center w-64">
+          <div>Pembimbing Lapangan,</div>
+          <div className="h-20" />
+          <div className="font-bold underline">
+            {profile.pembimbingLapangan}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex justify-center p-2 sm:p-4">
@@ -239,7 +289,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                               {r.startTime || "08.00"}
                             </td>
                             <td className="border border-slate-900 p-2 text-center">
-                              {r.endTime || "16.00"}
+                              {r.endTime || (r.dayName === "Sabtu" ? "14.00" : "16.00")}
                             </td>
                             <td className="border border-slate-900 p-2 leading-relaxed text-justify">
                               {r.narrative || "-"}
@@ -249,10 +299,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                       })}
                     </tbody>
                   </table>
+
+                  {/* Jika hanya 1 halaman, tampilkan tanda tangan di halaman 1 */}
+                  {page2Reports.length === 0 && renderSignatures()}
                 </div>
 
                 <div className="text-right text-[9pt] text-slate-400 no-print">
-                  Halaman 1
+                  {page2Reports.length === 0 ? "Halaman 1 dari 1" : "Halaman 1"}
                 </div>
               </div>
 
@@ -325,7 +378,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                 {r.startTime || "08.00"}
                               </td>
                               <td className="border border-slate-900 p-2 text-center">
-                                {r.endTime || "14.00"}
+                                {r.endTime || (r.dayName === "Sabtu" ? "14.00" : "16.00")}
                               </td>
                               <td className="border border-slate-900 p-2 leading-relaxed text-justify">
                                 {r.narrative || "-"}
@@ -337,38 +390,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     </table>
 
                     {/* Signatures Section */}
-                    <div className="mt-8 space-y-6">
-                      {/* Mahasiswa Signature */}
-                      <div className="flex justify-end pr-8">
-                        <div className="text-center w-56">
-                          <div>Mahasiswa,</div>
-                          <div className="h-20" />
-                          <div className="font-bold underline">{profile.nama}.</div>
-                        </div>
-                      </div>
-
-                      {/* Mengetahui */}
-                      <div className="text-center font-bold">Mengetahui,</div>
-
-                      {/* Dospem & Pembimbing Lapangan */}
-                      <div className="flex justify-between px-4">
-                        <div className="text-center w-64">
-                          <div>Dosen Pembimbing,</div>
-                          <div className="h-20" />
-                          <div className="font-bold underline">
-                            {profile.dosenPembimbing}
-                          </div>
-                        </div>
-
-                        <div className="text-center w-64">
-                          <div>Pembimbing Lapangan,</div>
-                          <div className="h-20" />
-                          <div className="font-bold underline">
-                            {profile.pembimbingLapangan}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    {renderSignatures()}
                   </div>
 
                   <div className="text-right text-[9pt] text-slate-400 no-print">
