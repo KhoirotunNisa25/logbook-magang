@@ -33,29 +33,36 @@ Aturan Penting:
     let summaryText = "";
 
     if (aiProvider === "gemini") {
-      const selectedModel = model || "gemini-2.5-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${effectiveKey}`;
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `${systemInstruction}\n\nBerikut catatan laporan harian Telegram:\n${rawText}`,
-                },
-              ],
+      const preferredModel = model || "gemini-3.8-flash";
+      const callGemini = async (modelName: string) => {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${effectiveKey}`;
+        return await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `${systemInstruction}\n\nBerikut catatan laporan harian Telegram:\n${rawText}`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 300,
             },
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 300,
-          },
-        }),
-      });
+          }),
+        });
+      };
+
+      let res = await callGemini(preferredModel);
+      if (!res.ok && res.status === 404) {
+        const fallbackModel = preferredModel === "gemini-3.8-flash" ? "gemini-flash-latest" : "gemini-3.8-flash";
+        res = await callGemini(fallbackModel);
+      }
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));

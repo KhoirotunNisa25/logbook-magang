@@ -78,5 +78,5 @@ export const DEFAULT_PROFILE: StudentProfile = {
 export const DEFAULT_AI_SETTINGS: AISettings = {
   provider: "gemini",
   apiKey: "",
-  model: "gemini-2.5-flash",
+  model: "gemini-3.8-flash",
 };

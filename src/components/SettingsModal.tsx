@@ -405,8 +405,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 >
                   {aiData.provider === "gemini" ? (
                     <>
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash (Sangat Cepat & Cerdas)</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash (Hemat & Stabil)</option>
+                      <option value="gemini-3.8-flash">Gemini 3.8 Flash (Direkomendasikan - Cepat & Cerdas)</option>
+                      <option value="gemini-flash-latest">Gemini Flash Latest (Otomatis Terbaru)</option>
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro (Penalaran Maksimal)</option>
                     </>
                   ) : (
