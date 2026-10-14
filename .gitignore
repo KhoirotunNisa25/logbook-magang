@@ -1,0 +1,37 @@
+# Logs & TeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Output PDFs & User Private Logbooks
+*.pdf
+lobook pdf/
+output/
+dist/
+
+# Environment and sensitive keys
+.env
+.env.local
+.env.*.local
+
+# Node & Next.js dependencies / build
+node_modules/
+.next/
+out/
+build/
+
+# Local personal data
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*~

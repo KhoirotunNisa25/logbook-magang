@@ -1,0 +1,137 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{times}
+\usepackage{graphicx}
+
+% --- Ukuran Kertas & Margin A4 Standar Polinema ---
+\setlength{\paperwidth}{210mm}
+\setlength{\paperheight}{297mm}
+\setlength{\topmargin}{-18mm}
+\setlength{\headheight}{32mm}
+\setlength{\headsep}{6mm}
+\setlength{\textheight}{245mm}
+\setlength{\textwidth}{165mm}
+\setlength{\oddsidemargin}{-3mm}
+\setlength{\evensidemargin}{-3mm}
+\setlength{\footskip}{0mm}
+\setlength{\parindent}{0pt}
+
+% --- Kop Surat Polinema pada Header Tiap Halaman ---
+\makeatletter
+\def\ps@polinema{%
+  \def\@oddhead{%
+    \vbox to \headheight{%
+      \hbox to \textwidth{%
+        \parbox[c]{2.3cm}{\includegraphics[width=2.2cm]{logo_polinema.jpg}}%
+        \hfill
+        \parbox[c]{14cm}{\centering
+          {\fontsize{11}{13}\selectfont\textbf{KEMENTERIAN PENDIDIKAN TINGGI, SAINS,\\[1pt]
+          DAN TEKNOLOGI}}\\[2pt]
+          {\fontsize{12}{14}\selectfont\textbf{POLITEKNIK NEGERI MALANG}}\\[2pt]
+          {\fontsize{11}{13}\selectfont\textbf{JURUSAN TEKNOLOGI INFORMASI}}\\[2pt]
+          {\fontsize{8.5}{10.5}\selectfont Jalan Soekarno Hatta Nomor 9, Jatimulyo, Lowokwaru, Malang 65141\\[1pt]
+          Telepon (0341) 404424, 404425, Faksimile (0341) 404420\\[1pt]
+          Laman www.polinema.ac.id}
+        }%
+      }%
+      \vspace{2mm}%
+      \hrule height 1.5pt
+      \vss
+    }%
+  }%
+  \def\@evenhead{\@oddhead}%
+  \def\@oddfoot{}%
+  \def\@evenfoot{}%
+}
+\let\ps@plain\ps@polinema
+\makeatother
+
+\pagestyle{polinema}
+
+% --- Parameter Data Magang ---
+\newcommand{\VarNama}{Khoirotun Nisa'}
+\newcommand{\VarNIM}{2341720057}
+\newcommand{\VarProdi}{Teknik Informatika}
+\newcommand{\VarMitra}{PT. Naraya Telematika}
+\newcommand{\VarDospem}{Ridwan Rismanto, SST., M.Kom.}
+\newcommand{\VarPembimbingLap}{Sekar Darma Revika}
+
+\begin{document}
+
+\begin{center}
+  \vspace*{2mm}
+  {\fontsize{11}{13}\selectfont\textbf{LOG BOOK KEGIATAN PROGRAM MAGANG INDUSTRI}}
+\end{center}
+\vspace{3mm}
+
+\begin{tabular}{@{}ll@{}}
+  \textbf{Nama} & : \VarNama \\
+  \textbf{NIM} & : \VarNIM \\
+  \textbf{Program Studi} & : \VarProdi \\
+  \textbf{Nama Mitra Industri} & : \VarMitra \\
+\end{tabular}
+
+\vspace{5mm}
+
+% --- Tabel Kegiatan (Halaman 1: Senin - Jumat) ---
+\renewcommand{\arraystretch}{1.35}
+\noindent\begin{tabular}{|p{2.6cm}|p{1.7cm}|p{1.7cm}|p{8.7cm}|}
+\hline
+\centering\textbf{Hari, Tanggal} & \centering\textbf{Jam Masuk} & \centering\textbf{Jam Pulang} & \centering\textbf{Kegiatan} \tabularnewline
+\hline
+\centering Senin, 5 Oktober 2026 & \centering 08.00 & \centering 16.00 & Mengikuti meeting bersama Pak Yuda dan tim untuk membahas pembaruan fitur, menjelaskan dasar Meta Ads, membagi tugas pengembangan, serta mendistribusikan konfigurasi environment kepada anggota tim. \tabularnewline
+\hline
+\centering Selasa, 6 Oktober 2026 & \centering 08.00 & \centering 16.00 & Mengikuti presentasi proyek magang melalui EventHub, menyempurnakan formulir dan klasifikasi konten, menambahkan fitur pengurutan serta ekspor jadwal, menyelesaikan revisi modul media sosial dan hak akses, serta memvalidasi relasi ID dan melakukan pengujian E2E pada lima brand resmi hingga commit ke branch. \tabularnewline
+\hline
+\centering Rabu, 7 Oktober 2026 & \centering 08.00 & \centering 16.00 & Melakukan pembuatan konten untuk akun Curhat.Santuy, memeriksa dashboard role media, serta mengoordinasikan arahan revisi bersama tim. \tabularnewline
+\hline
+\centering Kamis, 8 Oktober 2026 & \centering 08.00 & \centering 16.00 & Memastikan environment backend dan database berjalan normal, memvalidasi logika arsip konten, menyempurnakan ekspor Kalender Konten dan Run Sheet, serta menganalisis kebutuhan integrasi API Daily Report melalui gap analysis dan penyusunan dokumen teknis. \tabularnewline
+\hline
+\centering Jumat, 9 Oktober 2026 & \centering 08.00 & \centering 16.00 & Mengikuti event Installation to Maintenance Fiber Optic \& Maintenance Gangguan Kabel TO melalui EventHub serta membuat konten untuk akun Curhat.Santuy. \tabularnewline
+\hline
+\end{tabular}
+
+\clearpage
+
+% --- Tabel Kegiatan (Halaman 2: Sabtu) ---
+\renewcommand{\arraystretch}{1.35}
+\noindent\begin{tabular}{|p{2.6cm}|p{1.7cm}|p{1.7cm}|p{8.7cm}|}
+\hline
+\centering\textbf{Hari, Tanggal} & \centering\textbf{Jam Masuk} & \centering\textbf{Jam Pulang} & \centering\textbf{Kegiatan} \tabularnewline
+\hline
+\centering Sabtu, 10 Oktober 2026 & \centering 08.00 & \centering 14.00 & Menyempurnakan Media Calendar dan ekspor laporan, memperbaiki perhitungan CPL serta sinkronisasi biaya iklan, menstandarkan ID Master Content, meningkatkan analisis Content Trend, dan mengoptimalkan pencocokan serta sinkronisasi otomatis Meta Ads dan pelaporan iklan. \tabularnewline
+\hline
+\end{tabular}
+
+\vspace{1.5cm}
+
+% --- Tanda Tangan Mahasiswa ---
+\hfill
+\begin{minipage}{0.4\textwidth}
+  \centering
+  Mahasiswa,\\[1.8cm]
+  \textbf{\VarNama.}
+\end{minipage}
+
+\vspace{1cm}
+
+% --- Tanda Tangan Mengetahui Dosen & Pembimbing Lapangan ---
+\begin{center}
+  \textbf{Mengetahui,}
+\end{center}
+
+\vspace{2mm}
+
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  Dosen Pembimbing,\\[1.8cm]
+  \textbf{\VarDospem}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  Pembimbing Lapangan,\\[1.8cm]
+  \textbf{\VarPembimbingLap}
+\end{minipage}
+
+\end{document}
