@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { DailyReport, StudentProfile } from "@/types";
+import { DailyReport, StudentProfile, AISettings } from "@/types";
 import { getDayName, formatDateIndo } from "@/utils/date";
 import { generateDailyNarrative } from "@/utils/narrative";
-import { X, Sparkles, Clock, Calendar, Check, Trash2 } from "lucide-react";
+import { X, Sparkles, Clock, Calendar, Check, Trash2, Wand2, Loader2 } from "lucide-react";
 
 interface DailyReportModalProps {
   isOpen: boolean;
@@ -13,6 +13,8 @@ interface DailyReportModalProps {
   onDelete?: (date: string) => Promise<void>;
   initialReport?: DailyReport | null;
   profile: StudentProfile;
+  aiSettings: AISettings;
+  onOpenSettings: () => void;
 }
 
 export const DailyReportModal: React.FC<DailyReportModalProps> = ({
@@ -22,6 +24,8 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
   onDelete,
   initialReport,
   profile,
+  aiSettings,
+  onOpenSettings,
 }) => {
   const getTodayStr = () => {
     const today = new Date();
@@ -35,6 +39,8 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
   const [narrative, setNarrative] = useState<string>("");
   const [category, setCategory] = useState<DailyReport["category"]>("development");
   const [isSaving, setIsSaving] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialReport) {
@@ -54,9 +60,9 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
       setNarrative("");
       setCategory("development");
     }
+    setAiError(null);
   }, [initialReport, isOpen, profile]);
 
-  // Saat tanggal berubah, sesuaikan jam default
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
     const day = new Date(newDate).getDay();
@@ -69,11 +75,45 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
     }
   };
 
-  // Trigger auto-summarize
-  const handleAutoSummarize = () => {
+  // Instant local rule-based summarizer
+  const handleLocalSummarize = () => {
     if (!rawTelegramText.trim()) return;
     const result = generateDailyNarrative(rawTelegramText);
     setNarrative(result);
+    setAiError(null);
+  };
+
+  // Cloud AI Summarizer (Gemini / Claude)
+  const handleAiSummarize = async () => {
+    if (!rawTelegramText.trim()) return;
+    setIsAiLoading(true);
+    setAiError(null);
+
+    try {
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText: rawTelegramText,
+          provider: aiSettings.provider,
+          apiKey: aiSettings.apiKey,
+          model: aiSettings.model,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memproses dengan AI.");
+      }
+
+      setNarrative(data.summary);
+    } catch (err: any) {
+      console.warn("AI summarize fallback to local:", err);
+      setAiError(err.message || "Gagal menghubungi AI. Digunakan formatter lokal.");
+      handleLocalSummarize();
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -126,13 +166,13 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 no-print">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 px-6 py-4 text-white flex justify-between items-center">
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 px-6 py-4 text-white flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-bold">
+            <h3 className="text-base sm:text-lg font-bold">
               {initialReport ? "Edit Laporan Harian" : "Input Laporan Harian"}
             </h3>
             <p className="text-xs text-blue-100">
-              Paste teks chat Telegram untuk otomatis diringkas menjadi narasi baku
+              Paste teks chat Telegram untuk diringkas otomatis dengan AI Gemini / Formatter
             </p>
           </div>
           <button
@@ -197,20 +237,39 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
 
           {/* Row 2: Paste Raw Telegram */}
           <div>
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-1.5">
               <label className="text-xs font-semibold text-slate-700">
                 Pesan Laporan Harian Telegram (Mentah)
               </label>
-              <button
-                type="button"
-                onClick={handleAutoSummarize}
-                disabled={!rawTelegramText.trim()}
-                className="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 disabled:text-slate-400 font-semibold transition-colors"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Ringkas Otomatis</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleLocalSummarize}
+                  disabled={!rawTelegramText.trim() || isAiLoading}
+                  className="inline-flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                  title="Format instan tanpa API key"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Format Lokal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAiSummarize}
+                  disabled={!rawTelegramText.trim() || isAiLoading}
+                  className="inline-flex items-center space-x-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md font-semibold border border-indigo-200 transition-colors"
+                  title="Ringkas cerdas menggunakan Gemini/Claude AI"
+                >
+                  {isAiLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5 text-indigo-600" />
+                  )}
+                  <span>Ringkas AI ({aiSettings.provider === "gemini" ? "Gemini" : "Claude"})</span>
+                </button>
+              </div>
             </div>
+
             <textarea
               rows={3}
               value={rawTelegramText}
@@ -218,6 +277,19 @@ export const DailyReportModal: React.FC<DailyReportModalProps> = ({
               placeholder="Contoh:&#10;- Ikut meeting update fitur bersama pak Yuda&#10;- Slicing UI dashboard iklan&#10;- Integrasi API Daily report..."
               className="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 font-mono"
             />
+
+            {aiError && (
+              <div className="mt-1 text-[11px] text-amber-700 bg-amber-50 p-2 rounded border border-amber-200 flex justify-between items-center">
+                <span>{aiError}</span>
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  className="text-blue-700 underline font-semibold ml-2 flex-shrink-0"
+                >
+                  Set API Key
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Row 3: Hasil Narasi Logbook */}

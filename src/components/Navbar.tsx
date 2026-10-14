@@ -2,12 +2,14 @@
 
 import React from "react";
 import Image from "next/image";
-import { StudentProfile, FirebaseConfigSettings } from "@/types";
-import { Settings, PlusCircle, Cloud, CloudOff, FileSpreadsheet } from "lucide-react";
+import { StudentProfile, AuthUser } from "@/types";
+import { Settings, PlusCircle, LogIn, LogOut, FileSpreadsheet } from "lucide-react";
 
 interface NavbarProps {
   profile: StudentProfile;
-  firebaseConfig: FirebaseConfigSettings;
+  currentUser: AuthUser | null;
+  onLogin: () => void;
+  onLogout: () => void;
   onOpenSettings: () => void;
   onOpenNewReport: () => void;
   activeTab: "logbook" | "dissemination";
@@ -16,7 +18,9 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   profile,
-  firebaseConfig,
+  currentUser,
+  onLogin,
+  onLogout,
   onOpenSettings,
   onOpenNewReport,
   activeTab,
@@ -28,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex justify-between h-16 items-center">
           {/* Logo & Title */}
           <div className="flex items-center space-x-3">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm bg-white">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm bg-white flex-shrink-0">
               <Image
                 src="/logo_polinema.jpg"
                 alt="Logo Polinema"
@@ -77,49 +81,64 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Action Buttons */}
+          {/* User Auth & Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Sync Badge */}
-            <div
-              onClick={onOpenSettings}
-              className={`cursor-pointer hidden sm:flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                firebaseConfig.enabled
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-slate-50 text-slate-600 border-slate-200"
-              }`}
-              title={
-                firebaseConfig.enabled
-                  ? "Terhubung ke Firebase Firestore (Cloud Sync Aktif)"
-                  : "Tersimpan Lokal di Browser (Klik untuk Setup Firebase)"
-              }
-            >
-              {firebaseConfig.enabled ? (
-                <>
-                  <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Cloud Sync</span>
-                </>
-              ) : (
-                <>
-                  <CloudOff className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Lokal</span>
-                </>
-              )}
-            </div>
-
             {/* Quick Add Report Button */}
             <button
               onClick={onOpenNewReport}
               className="inline-flex items-center px-3.5 py-2 border border-transparent text-xs sm:text-sm font-semibold rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
             >
               <PlusCircle className="w-4 h-4 mr-1.5" />
-              <span>Input Report</span>
+              <span className="hidden sm:inline">Input Report</span>
+              <span className="sm:hidden">Input</span>
             </button>
+
+            {/* Google Auth Status / Button */}
+            {currentUser ? (
+              <div className="flex items-center space-x-2 border-l border-slate-200 pl-2">
+                <div className="flex items-center space-x-1.5" title={currentUser.email || ""}>
+                  {currentUser.photoURL ? (
+                    <img
+                      src={currentUser.photoURL}
+                      alt={currentUser.displayName || "User"}
+                      className="w-8 h-8 rounded-full border border-blue-500"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                      {currentUser.displayName?.charAt(0) || "U"}
+                    </div>
+                  )}
+                  <div className="hidden lg:block text-left text-xs">
+                    <div className="font-semibold text-slate-800 line-clamp-1 max-w-[120px]">
+                      {currentUser.displayName}
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-medium">Cloud Active</div>
+                  </div>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                  title="Keluar / Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onLogin}
+                className="inline-flex items-center px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-all"
+                title="Masuk dengan akun Google agar logbook tersimpan di cloud"
+              >
+                <LogIn className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                <span>Masuk Google</span>
+              </button>
+            )}
 
             {/* Settings Button */}
             <button
               onClick={onOpenSettings}
               className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-              title="Pengaturan Profil & Database"
+              title="Pengaturan Profil, AI & Database"
             >
               <Settings className="w-4 h-4" />
             </button>

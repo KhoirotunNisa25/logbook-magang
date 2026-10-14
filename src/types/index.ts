@@ -9,6 +9,7 @@ export interface DailyReport {
   category?: 'development' | 'meeting' | 'maintenance' | 'creative' | 'other';
   createdAt: number;
   updatedAt: number;
+  userId?: string;
 }
 
 export interface StudentProfile {
@@ -32,6 +33,19 @@ export interface FirebaseConfigSettings {
   messagingSenderId: string;
   appId: string;
   enabled: boolean;
+}
+
+export interface AISettings {
+  provider: 'gemini' | 'claude';
+  apiKey: string;
+  model: string;
+}
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
 }
 
 export interface WeeklyLogbook {
@@ -59,4 +73,10 @@ export const DEFAULT_PROFILE: StudentProfile = {
   defaultEndWeekday: "16.00",
   defaultStartSaturday: "08.00",
   defaultEndSaturday: "14.00",
+};
+
+export const DEFAULT_AI_SETTINGS: AISettings = {
+  provider: "gemini",
+  apiKey: "",
+  model: "gemini-2.5-flash",
 };

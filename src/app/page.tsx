@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { StudentProfile, DailyReport, WeeklyLogbook, FirebaseConfigSettings } from "@/types";
+import { StudentProfile, DailyReport, WeeklyLogbook, AISettings, AuthUser } from "@/types";
 import { StorageService } from "@/services/storage";
+import { auth } from "@/services/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { getInternshipMonths, generateMonthWeeks, MonthMeta } from "@/utils/date";
 import { Navbar } from "@/components/Navbar";
 import { WeeklyLogbookCard } from "@/components/WeeklyLogbookCard";
@@ -10,14 +12,15 @@ import { DailyReportModal } from "@/components/DailyReportModal";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { DisseminationModule } from "@/components/DisseminationModule";
-import { Calendar, CheckCircle2, Clock, Filter, Plus, Search } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 
 export default function Home() {
-  const [profile, setProfile] = useState<StudentProfile>(StorageService.getProfile());
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const currentUserId = currentUser?.uid || "guest";
+
+  const [profile, setProfile] = useState<StudentProfile>(StorageService.getProfile("guest"));
   const [reports, setReports] = useState<Record<string, DailyReport>>({});
-  const [firebaseConfig, setFirebaseConfig] = useState<FirebaseConfigSettings>(
-    StorageService.getFirebaseConfig()
-  );
+  const [aiSettings, setAiSettings] = useState<AISettings>(StorageService.getAISettings());
 
   const months = useMemo<MonthMeta[]>(() => getInternshipMonths(), []);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(10); // Default Oktober (10)
@@ -27,18 +30,49 @@ export default function Home() {
   // Modals state
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<DailyReport | null>(null);
-  const [reportDefaultDate, setReportDefaultDate] = useState<string | undefined>(undefined);
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewLogbook, setPreviewLogbook] = useState<WeeklyLogbook | null>(null);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  // Load initial data on browser mount
+  // Listen to Firebase Auth state
   useEffect(() => {
-    setProfile(StorageService.getProfile());
-    setReports(StorageService.getReports());
-    setFirebaseConfig(StorageService.getFirebaseConfig());
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const authUser: AuthUser = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        };
+        setCurrentUser(authUser);
+
+        // Fetch cloud data for this user
+        const { reports: cloudReports, profile: cloudProfile } =
+          await StorageService.syncFromCloud(user.uid);
+
+        setReports(StorageService.getReports(user.uid));
+        if (cloudProfile) {
+          setProfile(cloudProfile);
+        } else {
+          // If no remote profile yet, adapt name from Google Account
+          const localProf = StorageService.getProfile(user.uid);
+          if (user.displayName && localProf.nama === "Khoirotun Nisa’" && user.displayName !== "Khoirotun Nisa’") {
+            localProf.nama = user.displayName;
+          }
+          setProfile(localProf);
+        }
+      } else {
+        setCurrentUser(null);
+        setReports(StorageService.getReports("guest"));
+        setProfile(StorageService.getProfile("guest"));
+      }
+    });
+
+    setAiSettings(StorageService.getAISettings());
+
+    return () => unsubscribe();
   }, []);
 
   // Compute weeks for selected month with strict monthly cut-off
@@ -69,37 +103,67 @@ export default function Home() {
   );
 
   // Handlers
+  const handleLogin = async () => {
+    try {
+      await StorageService.loginWithGoogle();
+    } catch (err: any) {
+      if (err.code !== "auth/popup-closed-by-user") {
+        alert(`Gagal login Google: ${err.message}`);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await StorageService.logout();
+  };
+
   const handleSaveReport = async (report: DailyReport) => {
-    await StorageService.saveReport(report, firebaseConfig);
-    setReports(StorageService.getReports());
+    await StorageService.saveReport(report, currentUserId);
+    setReports(StorageService.getReports(currentUserId));
   };
 
   const handleDeleteReport = async (date: string) => {
-    await StorageService.deleteReport(date, firebaseConfig);
-    setReports(StorageService.getReports());
+    await StorageService.deleteReport(date, currentUserId);
+    setReports(StorageService.getReports(currentUserId));
   };
 
   const handleUpdateProfile = async (newProfile: StudentProfile) => {
-    await StorageService.saveProfile(newProfile, firebaseConfig);
+    await StorageService.saveProfile(newProfile, currentUserId);
     setProfile(newProfile);
   };
 
-  const handleUpdateFirebase = (newConfig: FirebaseConfigSettings) => {
-    StorageService.saveFirebaseConfig(newConfig);
-    setFirebaseConfig(newConfig);
+  const handleUpdateAISettings = (newSettings: AISettings) => {
+    StorageService.saveAISettings(newSettings);
+    setAiSettings(newSettings);
   };
 
   const handleDataSynced = () => {
-    setReports(StorageService.getReports());
-    setProfile(StorageService.getProfile());
+    setReports(StorageService.getReports(currentUserId));
+    setProfile(StorageService.getProfile(currentUserId));
   };
 
   const handleOpenReportModal = (
     report?: DailyReport | null,
     defaultDate?: string
   ) => {
-    setSelectedReport(report || null);
-    setReportDefaultDate(defaultDate);
+    if (report) {
+      setSelectedReport(report);
+    } else if (defaultDate) {
+      const isSat = new Date(defaultDate).getDay() === 6;
+      setSelectedReport({
+        id: defaultDate,
+        date: defaultDate,
+        dayName: "",
+        startTime: isSat ? profile.defaultStartSaturday : profile.defaultStartWeekday,
+        endTime: isSat ? profile.defaultEndSaturday : profile.defaultEndWeekday,
+        rawTelegramText: "",
+        narrative: "",
+        createdAt: 0,
+        updatedAt: 0,
+      });
+    } else {
+      setSelectedReport(null);
+    }
     setIsReportModalOpen(true);
   };
 
@@ -113,7 +177,9 @@ export default function Home() {
       {/* Top Navbar */}
       <Navbar
         profile={profile}
-        firebaseConfig={firebaseConfig}
+        currentUser={currentUser}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenNewReport={() => handleOpenReportModal(null)}
         activeTab={activeTab}
@@ -240,6 +306,8 @@ export default function Home() {
         onDelete={handleDeleteReport}
         initialReport={selectedReport}
         profile={profile}
+        aiSettings={aiSettings}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
       />
 
       <DocumentPreviewModal
@@ -253,9 +321,10 @@ export default function Home() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         profile={profile}
-        firebaseConfig={firebaseConfig}
+        aiSettings={aiSettings}
+        currentUser={currentUser}
         onUpdateProfile={handleUpdateProfile}
-        onUpdateFirebaseConfig={handleUpdateFirebase}
+        onUpdateAISettings={handleUpdateAISettings}
         onDataSynced={handleDataSynced}
       />
     </div>
